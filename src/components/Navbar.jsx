@@ -2,10 +2,12 @@ import { useTheme } from "../context/ThemeContext";
 import { Link, NavLink } from "react-router-dom";
 import { Zap, Search, Moon, Sun, Heart, ShoppingCart } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useStore } from "../context/StoreContext";
 
 export default function Navbar() {
   const { isAuthenticated, user } = useAuth();
   const { darkMode, toggleDarkMode } = useTheme();
+  const { cart, wishlist } = useStore();
 
   const navLinks = [
     { to: "/", label: "Home" },
@@ -63,16 +65,26 @@ export default function Navbar() {
 
           <Link
             to="/wishlist"
-            className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+            className="relative w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
           >
             <Heart size={17} className="text-gray-600 dark:text-white" />
+            {wishlist.length > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border border-white dark:border-gray-900 shadow-sm">
+                {wishlist.length}
+              </span>
+            )}
           </Link>
 
           <Link
             to="/cart"
-            className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+            className="relative w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
           >
             <ShoppingCart size={17} className="text-gray-600 dark:text-white" />
+            {cart.itemCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-indigo-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border border-white dark:border-gray-900 shadow-sm">
+                {cart.itemCount}
+              </span>
+            )}
           </Link>
 
           {isAuthenticated ? (

@@ -13,10 +13,6 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // stores { username, email, password, phone } while waiting for the OTP,
-  // needed because /register/send-otp requires the full payload again on resend
-  const [pendingRegistration, setPendingRegistration] = useState(null);
-
   const login = async (email, password) => {
     setLoading(true);
     setError("");
@@ -40,172 +36,6 @@ export function AuthProvider({ children }) {
       localStorage.setItem("user", JSON.stringify(data.user));
       setToken(data.token);
       setUser(data.user);
-      return true;
-    } catch (err) {
-      setError(err.message || "حدث خطأ، حاول مرة أخرى");
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ---------- REGISTER ----------
-  const register = async ({ username, email, password, phone }) => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch(`${API_BASE}/auth/register/send-otp`, {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, email, password, phone }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(
-          data.errors?.[0] || data.message || "فشل إنشاء الحساب"
-        );
-      }
-
-      setPendingRegistration({ username, email, password, phone });
-      return true;
-    } catch (err) {
-      setError(err.message || "حدث خطأ، حاول مرة أخرى");
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resendRegisterOtp = async (email) => {
-    setLoading(true);
-    setError("");
-    try {
-      const payload =
-        pendingRegistration?.email === email
-          ? pendingRegistration
-          : { email };
-
-      const res = await fetch(`${API_BASE}/auth/register/send-otp`, {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || "تعذر إعادة إرسال الكود");
-      }
-
-      return true;
-    } catch (err) {
-      setError(err.message || "حدث خطأ، حاول مرة أخرى");
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const verifyRegisterOtp = async (email, otp) => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch(`${API_BASE}/auth/register/verify-otp`, {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, otp }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(
-          data.errors?.[0] || data.message || "الكود غير صحيح"
-        );
-      }
-
-      // in case the API logs the user in directly after verification
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-        setToken(data.token);
-      }
-      if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-        setUser(data.user);
-      }
-
-      setPendingRegistration(null);
-      return true;
-    } catch (err) {
-      setError(err.message || "حدث خطأ، حاول مرة أخرى");
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ---------- FORGOT / RESET PASSWORD ----------
-  const forgotPasswordSendOtp = async (email) => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch(`${API_BASE}/auth/forgot-password/send-otp`, {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || "تعذر إرسال كود إعادة التعيين");
-      }
-
-      return true;
-    } catch (err) {
-      setError(err.message || "حدث خطأ، حاول مرة أخرى");
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resetPassword = async (email, otp, newPassword) => {
-    setLoading(true);
-    setError("");
-    try {
-      // ملحوظة: اسم الـ endpoint ده افتراضي، لازم يتأكد من الـ Swagger docs
-      const res = await fetch(`${API_BASE}/auth/reset-password`, {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, otp, newPassword }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(
-          data.errors?.[0] || data.message || "تعذر تغيير كلمة المرور"
-        );
-      }
-
       return true;
     } catch (err) {
       setError(err.message || "حدث خطأ، حاول مرة أخرى");
@@ -262,12 +92,6 @@ export function AuthProvider({ children }) {
         login,
         logout,
         updateProfile,
-        register,
-        resendRegisterOtp,
-        verifyRegisterOtp,
-        pendingRegistration,
-        forgotPasswordSendOtp,
-        resetPassword,
         loading,
         error,
       }}
