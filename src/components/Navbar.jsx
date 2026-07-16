@@ -1,11 +1,21 @@
+import { useState, useRef, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
-import { Link, NavLink } from "react-router-dom";
-import { Zap, Search, Moon, Sun, Heart, ShoppingCart } from "lucide-react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Zap, Search, Moon, Sun, Heart, ShoppingCart, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const { isAuthenticated, user } = useAuth();
   const { darkMode, toggleDarkMode } = useTheme();
+  const navigate = useNavigate();
+
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (searchOpen) inputRef.current?.focus();
+  }, [searchOpen]);
 
   const navLinks = [
     { to: "/", label: "Home" },
@@ -13,6 +23,48 @@ export default function Navbar() {
     { to: "/orders", label: "My Orders" },
     { to: "/wishlist", label: "Wishlist" },
   ];
+
+  const goToFooter = () => {
+    const footer = document.getElementById("footer");
+    if (footer) {
+      footer.scrollIntoView({ behavior: "smooth" });
+    } else {
+      navigate("/");
+      setTimeout(() => {
+        document.getElementById("footer")?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    }
+  };
+
+  const searchRoutes = [
+    { keywords: ["shop", "شوب", "shopping"], action: () => navigate("/shop") },
+    { keywords: ["home", "هوم"], action: () => navigate("/") },
+    { keywords: ["cart", "كارت"], action: () => navigate("/cart") },
+    { keywords: ["profile", "بروفيل", "بروفايل"], action: () => navigate("/cart") },
+    { keywords: ["orders", "اوردرز", "order"], action: () => navigate("/orders") },
+    { keywords: ["wishlist", "ويش ليست"], action: () => navigate("/wishlist") },
+    { keywords: ["contact", "كونتاكت"], action: () => goToFooter() },
+  ];
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      setSearchOpen(false);
+      return;
+    }
+
+    const match = searchRoutes.find((r) =>
+      r.keywords.some((k) => q.includes(k.toLowerCase()))
+    );
+
+    if (match) {
+      match.action();
+    }
+
+    setQuery("");
+    setSearchOpen(false);
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-white dark:bg-gray-900 shadow-sm dark:border-b dark:border-gray-800">
@@ -46,9 +98,38 @@ export default function Navbar() {
 
         {/* Right icons */}
         <div className="flex items-center gap-3">
-          <button className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
-            <Search size={17} className="text-gray-600 dark:text-white" />
-          </button>
+          {searchOpen ? (
+            <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onBlur={() => {
+                  if (!query) setSearchOpen(false);
+                }}
+                placeholder=".."
+                className="w-40 sm:w-56 h-9 px-4 pr-9 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setSearchOpen(false);
+                }}
+                className="absolute right-2 text-gray-400 hover:text-gray-600 dark:hover:text-white"
+              >
+                <X size={15} />
+              </button>
+            </form>
+          ) : (
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              <Search size={17} className="text-gray-600 dark:text-white" />
+            </button>
+          )}
 
           <button
             onClick={toggleDarkMode}

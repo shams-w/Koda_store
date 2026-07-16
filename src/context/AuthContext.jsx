@@ -13,8 +13,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // stores { username, email, password, phone } while waiting for the OTP,
-  // needed because /register/send-otp requires the full payload again on resend
+
   const [pendingRegistration, setPendingRegistration] = useState(null);
 
   const login = async (email, password) => {
@@ -48,6 +47,8 @@ export function AuthProvider({ children }) {
       setLoading(false);
     }
   };
+
+
 
   // ---------- REGISTER ----------
   const register = async ({ username, email, password, phone }) => {
@@ -155,7 +156,9 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // ---------- FORGOT / RESET PASSWORD ----------
+
+
+  
   const forgotPasswordSendOtp = async (email) => {
     setLoading(true);
     setError("");

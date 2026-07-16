@@ -1,3 +1,4 @@
+
 import { Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
@@ -11,6 +12,10 @@ import Login from "./pages/Login";
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 
+import { Toaster } from "react-hot-toast";
+
+import { CartProvider } from "./context/CartContext";
+
 export default function App() {
   const { isAuthenticated } = useAuth();
 
@@ -22,20 +27,28 @@ export default function App() {
           <Login />
         </div>
         <Footer />
+        
+        <Toaster position="top-center" reverseOrder={false} />
       </div>
     );
   }
 
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/shop" element={<Shop />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route path="/wishlist" element={<Wishlist />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/profile" element={<Profile />} />
-      </Route>
-    </Routes>
+    <CartProvider>
+      <>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/shop" element={<Shop />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/profile" element={<Profile />} />
+          </Route>
+        </Routes>
+        
+        <Toaster position="top-center" reverseOrder={false} />
+      </>
+    </CartProvider>
   );
 }

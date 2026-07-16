@@ -14,22 +14,25 @@ export default function Login() {
     error,
   } = useAuth();
 
-  // "login" | "register" | "verify-otp" | "forgot-password" | "reset-password"
+
+
+
+
   const [view, setView] = useState("login");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // register-only fields
+
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
 
-  // otp
+
   const [otp, setOtp] = useState("");
-  const [otpMode, setOtpMode] = useState("register"); // "register" | "reset"
+  const [otpMode, setOtpMode] = useState("register");
   const [cooldown, setCooldown] = useState(0);
 
-  // reset password
+
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [localError, setLocalError] = useState("");
@@ -109,7 +112,7 @@ export default function Login() {
     }
   };
 
-  // ---------------- LOGIN ----------------
+
   if (view === "login") {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center px-4 pt-12 pb-16">
@@ -200,7 +203,8 @@ export default function Login() {
     );
   }
 
-  // ---------------- REGISTER ----------------
+
+
   if (view === "register") {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center px-4 pt-12 pb-16">
@@ -323,7 +327,10 @@ export default function Login() {
     );
   }
 
-  // ---------------- VERIFY OTP ----------------
+
+
+
+
   if (view === "verify-otp") {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center px-4 pt-12 pb-16">
@@ -386,7 +393,11 @@ export default function Login() {
     );
   }
 
-  // ---------------- FORGOT PASSWORD ----------------
+ 
+
+
+
+
   if (view === "forgot-password") {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center px-4 pt-12 pb-16">
@@ -451,7 +462,11 @@ export default function Login() {
     );
   }
 
-  // ---------------- RESET PASSWORD ----------------
+ 
+
+
+
+  
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center px-4 pt-12 pb-16">
       <div className="flex items-center gap-2 mb-2">
