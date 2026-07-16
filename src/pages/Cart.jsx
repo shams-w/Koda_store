@@ -1,306 +1,157 @@
-import { useState, useEffect } from "react";
-import { useStore } from "../context/StoreContext";
-import { useAuth } from "../context/AuthContext";
-import { formatPrice } from "../api/products";
-import { useNavigate, Link } from "react-router-dom";
-import { Trash2, Plus, Minus, ShoppingBag, MapPin, Phone, User } from "lucide-react";
+import React from "react";
+
+import { Link } from "react-router-dom";
+
+import { FaShoppingCart, FaTrash, FaArrowLeft, FaTag } from "react-icons/fa";
+
+import { useCart } from "../context/CartContext";
+
+import toast from "react-hot-toast";
 
 export default function Cart() {
-  const { cart, updateCartQuantity, removeFromCart, clearCart, cartLoading } = useStore();
-  const { token, user } = useAuth();
-  const navigate = useNavigate();
+  const { cartItems, removeFromCart, clearCart, updateQuantity } = useCart();
 
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const shipping = subtotal > 1000 ? 0 : 50;
+  const tax = subtotal * 0.14;
+  const total = subtotal + shipping + tax;
 
-  // Form states with user profile defaults
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [country, setCountry] = useState("Egypt");
-  const [city, setCity] = useState("");
-  const [address, setAddress] = useState("");
-  const [postalCode, setPostalCode] = useState("");
+  if (cartItems.length === 0) {
 
-  // Sync profile info when user data is available
-  useEffect(() => {
-    if (user) {
-      setFullName(user.username || "");
-      setPhone(user.phone || "");
-      if (user.addresses && user.addresses.length > 0) {
-        const primaryAddr = user.addresses[0];
-        setCountry(primaryAddr.country || "Egypt");
-        setCity(primaryAddr.city || "");
-        setAddress(
-          `${primaryAddr.street || ""}${primaryAddr.building ? `, ${primaryAddr.building}` : ""}`
-        );
-        setPostalCode(primaryAddr.postalCode || "");
-      }
-    }
-  }, [user]);
-
-  const handleCheckout = async (e) => {
-    e.preventDefault();
-    if (!cart.items || cart.items.length === 0) return;
-
-    setCheckoutLoading(true);
-    try {
-      const res = await fetch("https://e-commerce-api-3wara.vercel.app/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          shippingAddress: {
-            fullName,
-            phone,
-            country,
-            city,
-            address,
-            postalCode,
-          },
-        }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        alert("Order placed successfully!");
-        clearCart();
-        navigate("/orders");
-      } else {
-        alert(data.message || "Failed to place order. Check if items are in stock.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error occurred while placing the order.");
-    } finally {
-      setCheckoutLoading(false);
-    }
-  };
-
-  if (cartLoading && (!cart.items || cart.items.length === 0)) {
     return (
-      <div className="max-w-7xl mx-auto px-6 py-12 flex flex-col items-center justify-center min-h-[50vh]">
-        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-gray-500">Loading your shopping cart...</p>
+      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-6 bg-[#faffa] dark:bg-gray-900">
+        <div className="w-20 h-20 rounded-full bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center mb-6">
+          <FaShoppingCart className="text-4xl text-gray-600 dark:text-gray-300" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-600 dark:text-gray-200 mb-3">Your cart is empty</h2>
+        <p className="text-gray-500 dark:text-gray-400 text-lg leading-8 mb-8">
+          Looks like you haven't added anything to your cart yet. <br />
+          Start shopping and find something you love!
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12">
-      <h1 className="text-3xl font-extrabold text-gray-900 mb-8 flex items-center gap-3">
-        <ShoppingBag className="text-indigo-600" size={28} /> Shopping Cart
-      </h1>
+    <div className="min-h-screen bg-[#fafafa] dark:bg-gray-900 py-12 px-6">
+      <div className="max-w-6xl mx-auto grid grid-cols-12 gap-8">
+        <div className="col-span-8">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
+            <ul className="space-y-6">
+              {cartItems.map((item) => (
+                <li
+                  key={item.id}
+                  className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-6 last:border-none">
+                
+                  <div className="flex items-center gap-4">
+                    <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded-lg" />
+                    
+                      
+                    
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">{item.name}</h3>
+                      <div className="flex items-center gap-2 mt-2">
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          className="px-2 py-1 bg-gray-200 dark:bg-gray-700 dark:text-gray-200 rounded"
+                          disabled={item.quantity <= 1} >  -
+                       
+                        </button>
+                        <span className="px-3 dark:text-gray-200">{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          className="px-2 py-1 bg-gray-200 dark:bg-gray-700 dark:text-gray-200 rounded"> +
+                      
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-6">
+                    <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
+                      EGP {(item.price * item.quantity).toLocaleString("en-US")}
+                    </span>
+                    <button
+                      onClick={() => {
+                        removeFromCart(item.id);
+                        toast.success(`${item.name} removed from cart`, { position: "top-center" });
+                      }}
+                      className="px-4 py-2 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/60 transition duration-300 flex items-center gap-2">
+                    
+                      <FaTrash /> 
+                      Remove
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
 
-      {!cart.items || cart.items.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-3xl p-16 text-center max-w-xl mx-auto shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
-          <div className="w-16 h-16 bg-gray-50 dark:bg-gray-700 text-gray-400 rounded-full flex items-center justify-center mx-auto">
-            <ShoppingBag size={28} />
+            <div className="flex justify-end mt-8">
+              <button
+                onClick={() => {
+                  clearCart();
+                  toast.success("Cart cleared successfully", { position: "top-center" });
+                }}
+                className="px-6 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition duration-300"
+              >
+                Clear Cart
+              </button>
+            </div>
           </div>
-          <div className="space-y-2">
-            <h3 className="text-xl font-bold text-gray-900">Your cart is empty</h3>
-            <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-              Looks like you haven't added anything to your cart yet. Head back to the store to explore.
+
+          
+          <div className="mt-6 bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6">
+            <h4 className="flex items-center gap-2 font-semibold mb-4 dark:text-gray-100">
+              <FaTag className="text-indigo-600 dark:text-indigo-400" /> Coupon Code
+            </h4>
+            <div className="flex gap-3">
+              <input  type="text" placeholder="Enter code" className="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 rounded-lg px-4 py-2"/>
+               
+                
+             <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                Apply
+              </button>
+              
+    
+            </div>
+          </div>
+        </div>
+
+        <div className="col-span-4 bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-8">
+          <h3 className="text-xl font-bold mb-6 dark:text-gray-100">Order Summary</h3>
+          <div className="space-y-3 text-gray-700 dark:text-gray-300">
+            <p className="flex justify-between">
+              <span>Subtotal:</span>
+              <span>EGP {subtotal.toLocaleString("en-US")}</span>
+            </p>
+            <p className="flex justify-between">
+              <span>Shipping:</span>
+              <span>
+                EGP {shipping}{" "}
+                {shipping === 0 && <span className="text-green-500 dark:text-green-400 text-sm">(Free)</span>}
+              </span>
+            </p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm">Free shipping on orders over EGP 1,000</p>
+            <p className="flex justify-between">
+              <span>Tax (14%):</span>
+              <span>EGP {tax.toLocaleString("en-US")}</span>
+            </p>
+            <p className="flex justify-between font-bold text-indigo-600 dark:text-indigo-400">
+              <span>Total:</span>
+              <span>EGP {total.toLocaleString("en-US")}</span>
             </p>
           </div>
-          <Link
-            to="/shop"
-            className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-full transition shadow-md shadow-indigo-600/10"
-          >
-            Start Shopping
-          </Link>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          {/* Cart Items List */}
-          <div className="lg:col-span-2 space-y-4">
-            {cart.items.map((item) => (
-              <div
-                key={item._id}
-                className="bg-white dark:bg-gray-800 rounded-3xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col sm:flex-row items-center gap-5 transition hover:shadow-md"
-              >
-                {item.image && (
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-24 h-24 rounded-2xl object-cover border border-gray-100 dark:border-gray-700 shrink-0"
-                  />
-                )}
 
-                <div className="flex-1 text-center sm:text-left space-y-1">
-                  <h3 className="font-bold text-gray-900 text-base">{item.name}</h3>
-                  <p className="text-gray-500 text-sm">{formatPrice(item.price)}</p>
-                </div>
-
-                {/* Quantity Controls */}
-                <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-1.5 border border-gray-100 dark:border-gray-700">
-                  <button
-                    onClick={() => updateCartQuantity(item.product, item.quantity - 1)}
-                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 text-gray-600 dark:text-white border border-gray-150 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-                  >
-                    <Minus size={14} />
-                  </button>
-                  <span className="w-8 text-center font-bold text-gray-900 text-sm">
-                    {item.quantity}
-                  </span>
-                  <button
-                    onClick={() => updateCartQuantity(item.product, item.quantity + 1)}
-                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 text-gray-600 dark:text-white border border-gray-150 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-                  >
-                    <Plus size={14} />
-                  </button>
-                </div>
-
-                {/* Subtotal & Delete */}
-                <div className="flex flex-row sm:flex-col items-center sm:items-end gap-3 sm:gap-2 shrink-0">
-                  <span className="font-extrabold text-indigo-600 text-base">
-                    {formatPrice(item.price * item.quantity)}
-                  </span>
-                  <button
-                    onClick={() => removeFromCart(item.product)}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-950/40 text-rose-600 transition border border-rose-100 dark:border-rose-950/30"
-                    aria-label="Remove item"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Checkout & Summary Side panel */}
-          <div className="space-y-6">
-            {/* Price Summary */}
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
-              <h2 className="font-extrabold text-gray-900 border-b border-gray-100 dark:border-gray-700 pb-3">
-                Order Summary
-              </h2>
-
-              <div className="space-y-2 text-sm text-gray-600">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span className="font-semibold text-gray-900">{formatPrice(cart.subtotal)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Shipping Fee</span>
-                  <span className="font-semibold text-gray-900">EGP 50</span>
-                </div>
-                <div className="flex justify-between border-t border-gray-100 dark:border-gray-700 pt-3 text-base">
-                  <span className="font-bold text-gray-900">Total Price</span>
-                  <span className="font-extrabold text-indigo-600 text-lg">
-                    {formatPrice(cart.total + 50)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Shipping & Checkout Form */}
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
-              <h2 className="font-extrabold text-gray-900 border-b border-gray-100 dark:border-gray-700 pb-3">
-                Shipping Details
-              </h2>
-
-              <form onSubmit={handleCheckout} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-500 flex items-center gap-1">
-                    <User size={12} /> Full Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Receiver's name"
-                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-500 flex items-center gap-1">
-                    <Phone size={12} /> Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Receiver's phone"
-                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-gray-500 flex items-center gap-1">
-                      <MapPin size={12} /> Country
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={country}
-                      onChange={(e) => setCountry(e.target.value)}
-                      placeholder="Country"
-                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-gray-500 flex items-center gap-1">
-                      <MapPin size={12} /> City
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      placeholder="City"
-                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-500 flex items-center gap-1">
-                    <MapPin size={12} /> Address
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Street, Building, Apartment"
-                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-500 flex items-center gap-1">
-                    Postal Code
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={postalCode}
-                    onChange={(e) => setPostalCode(e.target.value)}
-                    placeholder="Postal code"
-                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={checkoutLoading}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold py-3.5 rounded-2xl transition shadow-md shadow-indigo-600/10 mt-2"
-                >
-                  {checkoutLoading ? "Placing Order..." : "Place Cash Order"}
-                </button>
-              </form>
-            </div>
+          <div className="mt-6 space-y-3">
+            <button className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition">
+              Proceed to Checkout
+            </button>
+            <Link to="/shop" className="w-full flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 py-3 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+              
+              <FaArrowLeft /> Continue Shopping
+            </Link>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
