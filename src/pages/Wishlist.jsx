@@ -5,15 +5,10 @@ import { formatPrice } from "../api/products.js";
 
 export default function Wishlist() {
   const { wishlist, addToCart, toggleWishlist } = useStore();
-
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
-      <div className="flex items-center gap-3 border-b border-gray-100 dark:border-gray-800 pb-6 mb-8">
-        
-        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100">My Wishlist</h1>
-        <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-sm font-semibold px-3 py-1 rounded-full">
-          {wishlist.length} {wishlist.length === 1 ? "item" : "items"}
-        </span>
+      <div className="flex items-center gap-3pb-6 mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">My Wishlist</h1>
       </div>
 
       {wishlist.length === 0 ? (
@@ -38,38 +33,47 @@ export default function Wishlist() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {wishlist.map((product) => {
             const image = product.images?.[0]?.url;
-            const price = product.discountPrice || product.price;
+            const hasDiscount = !!product.discountPrice;
+            const price = hasDiscount ? product.discountPrice : product.price;
 
             return (
               <div
                 key={product._id}
-                className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm hover:shadow-lg duration-300 overflow-hidden"
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden"
               >
-                <div className="h-64 bg-gray-100 dark:bg-gray-700">
+                <div className="h-[300px] flex items-center justify-center bg-white p-6">
                   {image && (
                     <img
                       src={image}
                       alt={product.name}
-                      className="w-full h-full object-contain p-5"
+                      className="w-full h-full object-contain transition duration-300 hover:scale-110"
                     />
                   )}
                 </div>
-
                 <div className="p-5">
-                  <h3 className="font-semibold text-lg truncate dark:text-gray-100">{product.name}</h3>
-                  <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mb-5">
-                    {formatPrice(price)}
+                  <h3 className="font-medium text-base text-gray-900 dark:text-gray-100 truncate mb-2">
+                    {product.name}
+                  </h3>
+
+                  <div className="flex items-baseline gap-2 mb-5">
+                    <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                      {formatPrice(price)}
+                    </span>
+                    {hasDiscount && (
+                      <span className="text-base text-gray-400 dark:text-gray-500 line-through">
+                        {formatPrice(product.price)}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex gap-3">
                     <button
                       onClick={() => addToCart(product)}
-                      className="flex-1 h-12 rounded-xl font-semibold flex justify-center items-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700"
+                      className="flex-1 h-12 rounded-xl font-semibold flex justify-center items-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 transition"
                     >
                       <ShoppingCart size={18} />
                       Add to Cart
                     </button>
-
                     <button
                       onClick={() => toggleWishlist(product)}
                       className="w-12 h-12 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-500 dark:text-red-400 flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-950/60 transition"

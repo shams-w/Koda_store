@@ -11,6 +11,7 @@ import { useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
+import OrdersDetails from "./components/OrdersDetails";
 
 import { Toaster } from "react-hot-toast";
 

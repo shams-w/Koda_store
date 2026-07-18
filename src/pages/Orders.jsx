@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { FaChevronRight } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 
-// const API_BASE = "https://e-commerce-api-3wara.vercel.app";
-const API_BASE = "https://e-commerce-api-3wara.vercel.app/orders/my?page=1&limit=1";
-
+const API_BASE = "https://e-commerce-api-3wara.vercel.app";
 
 export default function Orders() {
-  const   token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhNDNjYmQ0MzMwYTZjN2ZkYWZlOTc1ZiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc4NDAzMjQ4OCwiZXhwIjoxNzg0NDY0NDg4fQ.FpdhzfuTILnl2EAtVCtdrkseHGLo60D_hrRnD6Ep8D0";
+  const { token } = useAuth();
+  const navigate = useNavigate();
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +19,7 @@ export default function Orders() {
 
   async function fetchOrders() {
     try {
-      const res = await fetch(`${API_BASE}/orders/my`, {
+      const res = await fetch(`${API_BASE}/orders/my?page=1&limit=10`, {
         headers: {
           accept: "application/json",
           Authorization: `Bearer ${token}`,
@@ -27,11 +28,11 @@ export default function Orders() {
 
       const data = await res.json();
 
-      if (!res.ok || !data.success) {
+      if (!res.ok) {
         throw new Error(data.message || "Failed to fetch orders");
       }
 
-      setOrders(data.orders || []);
+      setOrders(data.orders || data.data || []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -39,79 +40,108 @@ export default function Orders() {
     }
   }
 
-  const getStatusColor = (status) => {
-    switch (status) {
+  const getStatusStyle = (status) => {
+    switch (status?.toLowerCase()) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-700";
+
       case "confirmed":
-        return "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400";
+        return "bg-blue-100 text-blue-700";
+
+      case "processing":
+        return "bg-purple-100 text-purple-700";
+
+      case "shipped":
+        return "bg-cyan-100 text-cyan-700";
+
+      case "delivered":
+        return "bg-green-100 text-green-700";
 
       case "cancelled":
-        return "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400";
+        return "bg-red-100 text-red-700";
 
-      case "pending":
-        return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400";
+      case "returned":
+        return "bg-orange-100 text-orange-700";
 
       default:
-        return "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300";
+        return "bg-gray-100 text-gray-700";
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex justify-center items-center">
-        <p className="text-lg font-medium dark:text-gray-200">Loading Orders...</p>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-lg font-semibold">Loading Orders...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex justify-center items-center">
-        <p className="text-red-500 dark:text-red-400">{error}</p>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-red-500 text-lg">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10">
-      <div className="max-w-6xl mx-auto px-6">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-8">My Orders</h1>
+    <div className="min-h-screen bg-slate-50 py-12">
+      <div className="max-w-5xl mx-auto px-6">
+        <h1 className="text-5xl font-bold text-slate-900 mb-10">My Orders</h1>
 
         {orders.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl p-10 text-center shadow">
-            <p className="text-gray-500 dark:text-gray-400 text-lg">No Orders Yet</p>
+          <div className="bg-white rounded-3xl shadow border p-12 text-center">
+            <p className="text-gray-500 text-xl">No Orders Yet</p>
           </div>
         ) : (
           <div className="space-y-6">
             {orders.map((order) => (
               <div
                 key={order._id}
-                className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition"
+                onClick={() => navigate(`/orders/${order._id}`)}
+                className="bg-white rounded-3xl border border-gray-200 p-7 cursor-pointer hover:shadow-lg transition duration-300"
               >
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-center">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                      Order #{order._id.slice(-8)}
-                    </h2>
+                    <div className="flex items-center gap-4">
+                      <h2 className="font-bold text-2xl text-slate-900">
+                        #
+                        {order.orderNumber
+                          ? order.orderNumber
+                          : order._id.slice(-8).toUpperCase()}
+                      </h2>
 
-                    <p className="text-gray-500 dark:text-gray-400 mt-2">
-                      {new Date(order.createdAt).toLocaleDateString()}
+                      <span
+                        className={`px-4 py-1 rounded-full text-sm font-medium ${getStatusStyle(
+                          order.status,
+                        )}`}
+                      >
+                        {order.status}
+                      </span>
+                    </div>
+
+                    <p className="text-gray-500 mt-4 text-lg">
+                      {new Date(order.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
                     </p>
 
-                    <span
-                      className={`inline-block mt-4 px-4 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                        order.status,
-                      )}`}
-                    >
-                      {order.status}
-                    </span>
+                    <p className="text-gray-400 mt-1">
+                      {order.items?.length || 0} item(s)
+                    </p>
                   </div>
 
-                  <div className="text-right">
-                    <p className="text-gray-400 dark:text-gray-500 text-sm">Total Price</p>
-
-                    <h2 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
-                      EGP {order.totalPrice}
+                  <div className="flex items-center gap-6">
+                    <h2 className="text-3xl font-bold text-indigo-600">
+                      EGP{" "}
+                      {Number(
+                        order.totalPrice || order.total || 0,
+                      ).toLocaleString()}
                     </h2>
+
+                    <FaChevronRight size={20} className="text-gray-400" />
                   </div>
                 </div>
               </div>
